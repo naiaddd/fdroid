@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        requestInstallPermissionIfNeeded()
+
         binding.buttonCheckAll.setOnClickListener { checkAll() }
     }
 
@@ -230,6 +232,15 @@ class MainActivity : AppCompatActivity() {
         }
         connection.disconnect()
         return dest
+    }
+
+    private fun requestInstallPermissionIfNeeded() {
+        if (!packageManager.canRequestPackageInstalls()) {
+            Toast.makeText(this, "Allow installing unknown apps so Updater can install updates", Toast.LENGTH_LONG).show()
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")),
+            )
+        }
     }
 
     private fun installApk(file: File) {
