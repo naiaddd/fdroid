@@ -30,6 +30,8 @@ private class Row(
     val versionsView: TextView,
     val progress: ProgressBar,
     val button: Button,
+    val statusView: TextView,
+    val downloadProgress: ProgressBar,
 ) {
     var pendingDownloadUrl: String? = null
     var pendingFileName: String? = null
@@ -50,7 +52,17 @@ class MainActivity : AppCompatActivity() {
             item.textAppName.text = entry.displayName
             item.textVersions.text = "Installed: ${installedVersionName(entry.packageName)}  •  Latest: —"
             item.buttonAction.text = "—"
-            rows.add(Row(entry, item.textAppName, item.textVersions, item.progress, item.buttonAction))
+            rows.add(
+                Row(
+                    entry,
+                    item.textAppName,
+                    item.textVersions,
+                    item.progress,
+                    item.buttonAction,
+                    item.textDownloadStatus,
+                    item.downloadProgress,
+                ),
+            )
         }
 
         binding.buttonCheckAll.setOnClickListener { checkAll() }
@@ -129,23 +141,62 @@ class MainActivity : AppCompatActivity() {
         val url = row.pendingDownloadUrl ?: return
         val fileName = row.pendingFileName ?: return
         row.button.isEnabled = false
-        row.progress.visibility = View.VISIBLE
+        row.statusView.visibility = View.VISIBLE
+        row.downloadProgress.visibility = View.VISIBLE
+        row.downloadProgress.isIndeterminate = true
+        row.statusView.text = "Connecting…"
         lifecycleScope.launch {
             try {
-                val file = withContext(Dispatchers.IO) { downloadFile(url, fileName) }
+                val file =
+                    withContext(Dispatchers.IO) {
+                        downloadFile(url, fileName) { bytesRead, totalBytes, bytesPerSecond ->
+                            runOnUiThread { updateDownloadStatus(row, bytesRead, totalBytes, bytesPerSecond) }
+                        }
+                    }
+                row.statusView.text = "Installing…"
                 installApk(file)
             } catch (e: Exception) {
+                row.statusView.text = "Download failed: ${e.message}"
                 Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
-                row.progress.visibility = View.GONE
+                row.downloadProgress.visibility = View.GONE
                 row.button.isEnabled = true
             }
         }
     }
 
+    private fun updateDownloadStatus(
+        row: Row,
+        bytesRead: Long,
+        totalBytes: Long,
+        bytesPerSecond: Double,
+    ) {
+        if (totalBytes > 0) {
+            row.downloadProgress.isIndeterminate = false
+            row.downloadProgress.progress = ((bytesRead * 100) / totalBytes).toInt()
+        }
+        val sizeText = if (totalBytes > 0) "${formatBytes(bytesRead)} / ${formatBytes(totalBytes)}" else formatBytes(bytesRead)
+        row.statusView.text = "Downloading  $sizeText  •  ${formatSpeed(bytesPerSecond)}"
+    }
+
+    private fun formatBytes(bytes: Long): String =
+        when {
+            bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
+            else -> "$bytes B"
+        }
+
+    private fun formatSpeed(bytesPerSecond: Double): String =
+        when {
+            bytesPerSecond >= 1_000_000 -> "%.1f MB/s".format(bytesPerSecond / 1_000_000.0)
+            bytesPerSecond >= 1_000 -> "%.1f KB/s".format(bytesPerSecond / 1_000.0)
+            else -> "%.0f B/s".format(bytesPerSecond)
+        }
+
     private fun downloadFile(
         url: String,
         fileName: String,
+        onProgress: (bytesRead: Long, totalBytes: Long, bytesPerSecond: Double) -> Unit,
     ): File {
         val dir = File(getExternalFilesDir(null), "apks").apply { mkdirs() }
         val dest = File(dir, fileName)
@@ -154,8 +205,29 @@ class MainActivity : AppCompatActivity() {
         connection.connectTimeout = 15_000
         connection.readTimeout = 30_000
         connection.connect()
+        val totalBytes = connection.contentLengthLong
         connection.inputStream.use { input ->
-            dest.outputStream().use { output -> input.copyTo(output) }
+            dest.outputStream().use { output ->
+                val buffer = ByteArray(8 * 1024)
+                var bytesRead = 0L
+                var lastReportTime = System.currentTimeMillis()
+                var lastReportBytes = 0L
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read == -1) break
+                    output.write(buffer, 0, read)
+                    bytesRead += read
+                    val now = System.currentTimeMillis()
+                    val elapsed = now - lastReportTime
+                    if (elapsed >= 250) {
+                        val bytesPerSecond = (bytesRead - lastReportBytes) * 1000.0 / elapsed
+                        onProgress(bytesRead, totalBytes, bytesPerSecond)
+                        lastReportTime = now
+                        lastReportBytes = bytesRead
+                    }
+                }
+                onProgress(bytesRead, totalBytes, 0.0)
+            }
         }
         connection.disconnect()
         return dest
