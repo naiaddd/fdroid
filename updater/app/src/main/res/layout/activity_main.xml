@@ -10,10 +10,25 @@
         android:layout_weight="1">
 
         <LinearLayout
-            android:id="@+id/appListContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="24dp"
+                android:gravity="center"
+                android:text="Tap Check for Updates to find apps" />
+
+            <LinearLayout
+                android:id="@+id/appListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </LinearLayout>
 
     </ScrollView>
 

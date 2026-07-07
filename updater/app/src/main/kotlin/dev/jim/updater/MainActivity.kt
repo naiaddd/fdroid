@@ -46,25 +46,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val inflater = LayoutInflater.from(this)
-        for (entry in KNOWN_APPS) {
-            val item = ItemAppBinding.inflate(inflater, binding.appListContainer, true)
-            item.textAppName.text = entry.displayName
-            item.textVersions.text = "Installed: ${installedVersionName(entry.packageName)}  •  Latest: —"
-            item.buttonAction.text = "—"
-            rows.add(
-                Row(
-                    entry,
-                    item.textAppName,
-                    item.textVersions,
-                    item.progress,
-                    item.buttonAction,
-                    item.textDownloadStatus,
-                    item.downloadProgress,
-                ),
-            )
-        }
-
         binding.buttonCheckAll.setOnClickListener { checkAll() }
     }
 
@@ -73,42 +54,60 @@ class MainActivity : AppCompatActivity() {
         rows.forEach { it.progress.visibility = View.VISIBLE }
         lifecycleScope.launch {
             try {
-                val releases = withContext(Dispatchers.IO) { GithubApi.fetchReleases() }
-                rows.forEach { updateRow(it, releases) }
+                val (manifest, releases) =
+                    withContext(Dispatchers.IO) {
+                        val manifest = AppsManifest.fetch()
+                        val releases = GithubApi.fetchReleases()
+                        manifest to releases
+                    }
+                val resolvedApps = discoverApps(manifest, releases)
+                rebuildRows(resolvedApps)
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Check failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 binding.buttonCheckAll.isEnabled = true
-                rows.forEach { it.progress.visibility = View.GONE }
             }
+        }
+    }
+
+    private fun rebuildRows(resolvedApps: List<ResolvedApp>) {
+        rows.clear()
+        binding.appListContainer.removeAllViews()
+        binding.textEmptyState.visibility = if (resolvedApps.isEmpty()) View.VISIBLE else View.GONE
+
+        val inflater = LayoutInflater.from(this)
+        for (resolved in resolvedApps) {
+            val item = ItemAppBinding.inflate(inflater, binding.appListContainer, true)
+            item.textAppName.text = resolved.entry.displayName
+            val row =
+                Row(
+                    resolved.entry,
+                    item.textAppName,
+                    item.textVersions,
+                    item.progress,
+                    item.buttonAction,
+                    item.textDownloadStatus,
+                    item.downloadProgress,
+                )
+            rows.add(row)
+            updateRow(row, resolved)
         }
     }
 
     private fun updateRow(
         row: Row,
-        releases: List<ReleaseInfo>,
+        resolved: ResolvedApp,
     ) {
-        val tagRegex = Regex("^${Regex.escape(row.entry.tagPrefix)}-v(\\d+\\.\\d+\\.\\d+)\\+(\\d+)$")
-        val release = releases.firstOrNull { tagRegex.matches(it.tagName) }
         val installedName = installedVersionName(row.entry.packageName)
         val installedCode = installedVersionCode(row.entry.packageName)
 
-        if (release == null) {
-            row.versionsView.text = "Installed: $installedName  •  No release found"
-            row.button.isEnabled = false
-            row.button.text = "—"
-            return
-        }
-
-        val match = tagRegex.matchEntire(release.tagName)!!
-        val (remoteVersion, remoteCodeStr) = match.destructured
-        val baseRemoteCode = remoteCodeStr.toLong()
         // Flutter's --split-per-abi build offsets the installed versionCode per ABI
         // (+2000 arm64-v8a, +1000 armeabi-v7a) while the release tag carries the bare
         // base code, so the two must be reconciled before comparing.
-        val effectiveRemoteCode = if (row.entry.hasAbiSplit) baseRemoteCode + abiVersionCodeOffset() else baseRemoteCode
+        val effectiveRemoteCode =
+            if (row.entry.hasAbiSplit) resolved.baseRemoteCode + abiVersionCodeOffset() else resolved.baseRemoteCode
 
-        row.versionsView.text = "Installed: $installedName  •  Latest: $remoteVersion+$baseRemoteCode"
+        row.versionsView.text = "Installed: $installedName  •  Latest: ${resolved.remoteVersion}+${resolved.baseRemoteCode}"
 
         if (effectiveRemoteCode <= installedCode) {
             row.button.isEnabled = false
@@ -122,7 +121,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 "${row.entry.tagPrefix}.apk"
             }
-        val asset = release.assets.firstOrNull { it.name == assetName }
+        val asset = resolved.release.assets.firstOrNull { it.name == assetName }
         if (asset == null) {
             row.versionsView.text = "${row.versionsView.text}  (asset $assetName missing)"
             row.button.isEnabled = false

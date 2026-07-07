@@ -1,0 +1,30 @@
+{
+  "indicium": {
+    "packageName": "dev.jim.statbot.indicium",
+    "displayName": "Indicium"
+  },
+  "industria": {
+    "packageName": "com.example.industria",
+    "displayName": "Industria"
+  },
+  "anetmon": {
+    "packageName": "dev.jim.anetmon",
+    "displayName": "Anetmon"
+  },
+  "sentry": {
+    "packageName": "dev.jim.sentry",
+    "displayName": "Sentry"
+  },
+  "tutor": {
+    "packageName": "dev.jim.tutor",
+    "displayName": "Tutor"
+  },
+  "didact": {
+    "packageName": "dev.jim.didact",
+    "displayName": "Didact"
+  },
+  "updater": {
+    "packageName": "dev.jim.updater",
+    "displayName": "Updater"
+  }
+}
