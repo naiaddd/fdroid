@@ -11,8 +11,8 @@ android {
         applicationId = "dev.jim.updater"
         minSdk = 28
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.0.2"
+        versionCode = 4
+        versionName = "0.0.3"
     }
 
     buildTypes {

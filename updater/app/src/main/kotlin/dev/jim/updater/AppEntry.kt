@@ -15,4 +15,5 @@ val KNOWN_APPS =
         AppEntry("Sentry", "dev.jim.sentry", "sentry", hasAbiSplit = false),
         AppEntry("Tutor", "dev.jim.tutor", "tutor", hasAbiSplit = true),
         AppEntry("Didact", "dev.jim.didact", "didact", hasAbiSplit = true),
+        AppEntry("Updater", "dev.jim.updater", "updater", hasAbiSplit = false),
     )
