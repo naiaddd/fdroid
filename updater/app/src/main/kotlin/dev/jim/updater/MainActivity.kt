@@ -32,6 +32,7 @@ private class Row(
     val button: Button,
     val statusView: TextView,
     val downloadProgress: ProgressBar,
+    val releaseNotesView: TextView,
 ) {
     var pendingDownloadUrl: String? = null
     var pendingFileName: String? = null
@@ -96,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                     item.buttonAction,
                     item.textDownloadStatus,
                     item.downloadProgress,
+                    item.textReleaseNotes,
                 )
             rows.add(row)
             updateRow(row, resolved)
@@ -116,6 +118,13 @@ class MainActivity : AppCompatActivity() {
             if (row.entry.hasAbiSplit) resolved.baseRemoteCode + abiVersionCodeOffset() else resolved.baseRemoteCode
 
         row.versionsView.text = "Installed: $installedName  •  Latest: ${resolved.remoteVersion}+${resolved.baseRemoteCode}"
+
+        if (resolved.release.body.isNotBlank()) {
+            row.releaseNotesView.text = resolved.release.body.trim()
+            row.releaseNotesView.visibility = View.VISIBLE
+        } else {
+            row.releaseNotesView.visibility = View.GONE
+        }
 
         if (effectiveRemoteCode <= installedCode) {
             row.button.isEnabled = false

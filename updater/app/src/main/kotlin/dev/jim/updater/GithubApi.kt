@@ -7,7 +7,7 @@ import java.net.URL
 
 data class ReleaseAsset(val name: String, val downloadUrl: String)
 
-data class ReleaseInfo(val tagName: String, val assets: List<ReleaseAsset>)
+data class ReleaseInfo(val tagName: String, val assets: List<ReleaseAsset>, val body: String)
 
 /**
  * Reads GitHub Releases as the update index — deploy.sh publishes one release per
@@ -35,7 +35,8 @@ object GithubApi {
                         val assetJson = assetsJson.getJSONObject(j)
                         ReleaseAsset(assetJson.getString("name"), assetJson.getString("browser_download_url"))
                     }
-                ReleaseInfo(releaseJson.getString("tag_name"), assets)
+                val body = releaseJson.optString("body", "")
+                ReleaseInfo(releaseJson.getString("tag_name"), assets, body)
             }
         } finally {
             connection.disconnect()
