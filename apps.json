@@ -26,5 +26,9 @@
   "updater": {
     "packageName": "dev.jim.updater",
     "displayName": "Updater"
+  },
+  "brine": {
+    "packageName": "dev.jim.brine",
+    "displayName": "Brine"
   }
 }
