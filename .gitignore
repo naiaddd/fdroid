@@ -1,0 +1,17 @@
+config.yml
+deploy.sh
+keystore.p12
+VENV_PATH
+*.p12
+*.jks
+tmp/
+home/
+srclibs/
+CLAUDE.md
+updater/local.properties
+updater/.gradle/
+updater/build/
+updater/app/build/
+updater/*.iml
+brine-keystore.pass
+acetone-keystore.pass
