@@ -1,0 +1,10 @@
+
+[DONE 2026-07-14] bug where godot apks are showing up as uninstalled . update behaviour still works. . .
+  cause: AndroidManifest.xml <queries> allow-list (Android 11+ package visibility)
+  was missing dev.jim.brine and dev.jim.acetone, so getPackageInfo() threw
+  NameNotFoundException -> rendered "Install"/not-installed. Install intent still
+  updated the real package, hence updates worked. Added both packages.
+  FIXED the drift hazard too: the <queries> block is now auto-generated from
+  apps.json by the syncQueries Gradle task (app/build.gradle.kts), which runs
+  before every build. New apps in apps.json become visible on the next Updater
+  build. Manifest region is marked GENERATED:queries:BEGIN/END.
