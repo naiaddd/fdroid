@@ -5,14 +5,21 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Explicit package visibility (API 30+) so getPackageInfo() succeeds for these apps
-         without needing the QUERY_ALL_PACKAGES permission. -->
+         without needing the QUERY_ALL_PACKAGES permission. The <package> entries between
+         the GENERATED markers are regenerated from ../apps.json by the syncQueries Gradle
+         task on every build — do not edit them by hand. -->
     <queries>
-        <package android:name="dev.jim.statbot.indicium" />
+        <!-- GENERATED:queries:BEGIN (from apps.json — do not edit by hand) -->
         <package android:name="com.example.industria" />
+        <package android:name="dev.jim.acetone" />
         <package android:name="dev.jim.anetmon" />
-        <package android:name="dev.jim.sentry" />
-        <package android:name="dev.jim.tutor" />
+        <package android:name="dev.jim.brine" />
         <package android:name="dev.jim.didact" />
+        <package android:name="dev.jim.sentry" />
+        <package android:name="dev.jim.statbot.indicium" />
+        <package android:name="dev.jim.tutor" />
+        <package android:name="dev.jim.updater" />
+        <!-- GENERATED:queries:END -->
     </queries>
 
     <application
