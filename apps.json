@@ -38,5 +38,19 @@
   "babybool": {
     "packageName": "com.jaymacbarn.babybool",
     "displayName": "Babybool"
+  },
+  "babybool-waray": {
+    "packageName": "com.jaymacbarn.babybool.raw",
+    "displayName": "Babybool Waray",
+    "cohorts": [
+      "glendel"
+    ]
+  },
+  "updater-glendel": {
+    "packageName": "dev.jim.updater",
+    "displayName": "Updater (glendel)",
+    "cohorts": [
+      "glendel"
+    ]
   }
 }
