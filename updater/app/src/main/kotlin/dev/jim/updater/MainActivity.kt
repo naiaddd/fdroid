@@ -53,6 +53,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Lift the bottom button above the gesture/navigation bar when the device has one.
+        applyBottomNavBarInset(binding.root)
+
         requestInstallPermissionIfNeeded()
 
         binding.buttonCheckAll.setOnClickListener { checkAll() }
