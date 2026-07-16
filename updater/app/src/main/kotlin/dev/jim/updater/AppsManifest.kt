@@ -5,7 +5,13 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class ManifestEntry(val packageName: String, val displayName: String)
+data class ManifestEntry(
+    val packageName: String,
+    val displayName: String,
+    // Cohorts this app is exposed to. Empty = untagged (visible only to the "all"
+    // build). A tailored build with cohort "X" sees this app iff "X" is in here.
+    val cohorts: Set<String>,
+)
 
 /**
  * apps.json lives at the root of the fdroid repo and maps GitHub release tag
@@ -29,7 +35,14 @@ object AppsManifest {
             val result = mutableMapOf<String, ManifestEntry>()
             json.keys().forEach { key ->
                 val entryJson = json.getJSONObject(key)
-                result[key] = ManifestEntry(entryJson.getString("packageName"), entryJson.getString("displayName"))
+                val cohorts = entryJson.optJSONArray("cohorts")?.let { arr ->
+                    (0 until arr.length()).map { arr.getString(it) }.toSet()
+                } ?: emptySet()
+                result[key] = ManifestEntry(
+                    entryJson.getString("packageName"),
+                    entryJson.getString("displayName"),
+                    cohorts,
+                )
             }
             return result
         } finally {
@@ -49,9 +62,17 @@ data class ResolvedApp(
  * Combines the manifest with the raw release list to find, per app, the release
  * with the highest version code — releases group by tag prefix ("<prefix>-v<version>+<code>").
  */
+/** The superuser cohort baked into the default (dev) build — sees every app. */
+const val COHORT_ALL = "all"
+
+/** Whether a build on [cohort] may see an app tagged with [appCohorts]. */
+fun isVisibleTo(cohort: String, appCohorts: Set<String>): Boolean =
+    cohort == COHORT_ALL || cohort in appCohorts
+
 fun discoverApps(
     manifest: Map<String, ManifestEntry>,
     releases: List<ReleaseInfo>,
+    cohort: String = COHORT_ALL,
 ): List<ResolvedApp> {
     val tagRegex = Regex("^(.+)-v(\\d+\\.\\d+\\.\\d+)\\+(\\d+)$")
     val parsed =
@@ -66,6 +87,7 @@ fun discoverApps(
         .groupBy { it.first }
         .mapNotNull { (prefix, candidates) ->
             val manifestEntry = manifest[prefix] ?: return@mapNotNull null
+            if (!isVisibleTo(cohort, manifestEntry.cohorts)) return@mapNotNull null
             val (_, versionAndCode, release) = candidates.maxByOrNull { it.second.second } ?: return@mapNotNull null
             val (version, code) = versionAndCode
             val hasAbiSplit =

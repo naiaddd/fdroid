@@ -56,6 +56,11 @@ class MainActivity : AppCompatActivity() {
         requestInstallPermissionIfNeeded()
 
         binding.buttonCheckAll.setOnClickListener { checkAll() }
+
+        // Render the last successful network read immediately so the list isn't blank
+        // until the user taps Check. Installed versions are read live in updateRow().
+        val cached = StateCache.load(this)
+        if (cached.isNotEmpty()) rebuildRows(cached)
     }
 
     private fun checkAll() {
@@ -69,8 +74,9 @@ class MainActivity : AppCompatActivity() {
                         val releases = GithubApi.fetchReleases()
                         manifest to releases
                     }
-                val resolvedApps = discoverApps(manifest, releases)
+                val resolvedApps = discoverApps(manifest, releases, BuildConfig.COHORT)
                 rebuildRows(resolvedApps)
+                StateCache.save(this@MainActivity, resolvedApps)
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Check failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {

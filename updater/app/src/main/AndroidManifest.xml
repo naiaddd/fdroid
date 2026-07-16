@@ -4,23 +4,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <!-- Explicit package visibility (API 30+) so getPackageInfo() succeeds for these apps
-         without needing the QUERY_ALL_PACKAGES permission. The <package> entries between
-         the GENERATED markers are regenerated from ../apps.json by the syncQueries Gradle
-         task on every build — do not edit them by hand. -->
-    <queries>
-        <!-- GENERATED:queries:BEGIN (from apps.json — do not edit by hand) -->
-        <package android:name="com.example.industria" />
-        <package android:name="dev.jim.acetone" />
-        <package android:name="dev.jim.anetmon" />
-        <package android:name="dev.jim.brine" />
-        <package android:name="dev.jim.didact" />
-        <package android:name="dev.jim.sentry" />
-        <package android:name="dev.jim.statbot.indicium" />
-        <package android:name="dev.jim.tutor" />
-        <package android:name="dev.jim.updater" />
-        <!-- GENERATED:queries:END -->
-    </queries>
+    <!-- Package visibility (Android 11+). QUERY_ALL_PACKAGES makes every installed package
+         visible to getPackageInfo() with no build-time allow-list, so an app newly added to
+         apps.json is recognized as installed by an already-shipped Updater without a rebuild.
+         Play Store restricts this permission, but the Updater is sideloaded from GitHub
+         Releases and never goes through Play, so the restriction doesn't apply. This replaces
+         the old <queries> list (regenerated from apps.json by a syncQueries Gradle task),
+         which forced a reship on every roster change. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
         android:allowBackup="true"

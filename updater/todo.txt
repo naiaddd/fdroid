@@ -8,3 +8,25 @@
   apps.json by the syncQueries Gradle task (app/build.gradle.kts), which runs
   before every build. New apps in apps.json become visible on the next Updater
   build. Manifest region is marked GENERATED:queries:BEGIN/END.
+
+[DONE 2026-07-16] cache last state read
+  StateCache (SharedPreferences) persists the last successful network read (the
+  resolved app/release list) as JSON. MainActivity renders it on launch so the
+  list isn't blank until Check is tapped; installed versions are still read live
+  from PackageManager in updateRow(), and a successful checkAll() re-saves.
+
+[DONE 2026-07-16] Public release build with whitelisted app enablements
+  Cohort-based whitelisting. apps.json entries gain an optional "cohorts": [...]
+  array. Each Updater build bakes in one cohort via BuildConfig.COHORT, set from
+  a gradle property:
+    ./gradlew assembleRelease              -> cohort "all" (dev build, sees every app)
+    ./gradlew assembleRelease -Pcohort=beta -> sees only apps tagged with "beta"
+  discoverApps() filters: keep app iff cohort=="all" OR build cohort in entry.cohorts.
+  Untagged apps are visible only to the "all" build; non-matching apps are hidden
+  entirely. Membership lives in apps.json (fetched at runtime), so grant/revoke a
+  tester's access by editing apps.json — no reship. deploy.sh's update_apps_manifest
+  now MERGES entries so a redeploy preserves hand-added "cohorts".
+
+  ALSO 2026-07-16: replaced the <queries> allow-list (+ syncQueries task) with the
+  QUERY_ALL_PACKAGES permission, so a newly-rostered app is seen as installed
+  without a rebuild. Fixes the babybool "not installed" recurrence.
