@@ -39,9 +39,9 @@
     "packageName": "com.jaymacbarn.babybool",
     "displayName": "Babybool"
   },
-  "babybool-waray": {
+  "babyboolraw": {
     "packageName": "com.jaymacbarn.babybool.raw",
-    "displayName": "Babybool Waray",
+    "displayName": "BabyboolRaw",
     "cohorts": [
       "glendel"
     ]
