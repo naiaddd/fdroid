@@ -11,8 +11,8 @@ android {
         applicationId = "dev.jim.updater"
         minSdk = 28
         targetSdk = 35
-        versionCode = 12
-        versionName = "0.0.11"
+        versionCode = 13
+        versionName = "0.0.12"
 
         // Which app cohort this build exposes. Default "all" = dev/superuser build that
         // sees every app in apps.json. Build a tailored distribution with e.g.
