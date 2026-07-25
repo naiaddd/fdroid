@@ -52,5 +52,9 @@
     "cohorts": [
       "glendel"
     ]
+  },
+  "chatter": {
+    "packageName": "dev.jim.chatter",
+    "displayName": "Chatter"
   }
 }
