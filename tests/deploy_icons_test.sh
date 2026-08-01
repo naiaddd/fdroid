@@ -46,6 +46,14 @@ if ICONCTL_PATH="$FAKE" ICONCTL_LOG="$TMP/invalid.log" \
 fi
 grep -q 'Invalid --icons mode' "$TMP/bad.out" || fail "invalid mode message"
 
+ICONCTL_PATH="$FAKE" ICONCTL_LOG="$TMP/cohort.log" \
+    "$DEPLOY" --updater-cohort=glendel --icon-preflight --icons=require \
+    >"$TMP/cohort.out" 2>&1 || fail "cohort preflight failed"
+test "$(cat "$TMP/cohort.log")" = \
+    "preflight --mode require updater" || fail "cohort preflight selection"
+grep -q 'no versions bumped' "$TMP/cohort.out" || \
+    fail "cohort preflight did not stop before deployment"
+
 # Choice 5 makes no version change, so this exercises ordering without a
 # build or a persistent version edit.  The preflight banner must precede the
 # first bump prompt.
