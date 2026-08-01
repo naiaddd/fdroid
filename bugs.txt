@@ -1,0 +1,3 @@
+- Deploy source commits used `fastpush`/`git add .`, so unrelated dirty app files
+  could ship after icon preflight. Limit commits to the bumped version file and
+  preflight-reported icon files. Regression: `tests/deploy_icons_test.sh`.

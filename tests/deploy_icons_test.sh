@@ -54,6 +54,48 @@ test "$(cat "$TMP/cohort.log")" = \
 grep -q 'no versions bumped' "$TMP/cohort.out" || \
     fail "cohort preflight did not stop before deployment"
 
+# A source-repo commit must contain only the version file and icon files
+# returned by preflight. An unrelated dirty file must remain uncommitted.
+awk '
+    /^_icon_files_for_app\(\)/ { emit = 1 }
+    emit { print }
+    emit && /^}$/ { exit }
+' "$DEPLOY" >"$TMP/scope-functions.sh"
+awk '
+    /^_push_one_app\(\)/ { emit = 1 }
+    emit { print }
+    emit && /^}$/ { exit }
+' "$DEPLOY" >>"$TMP/scope-functions.sh"
+
+scope_repo="$TMP/scope-repo"
+mkdir -p "$scope_repo"
+git -C "$scope_repo" init -q
+git -C "$scope_repo" config user.email test@example.invalid
+git -C "$scope_repo" config user.name test
+printf 'version: 0.1.0+1\n' >"$scope_repo/pubspec.yaml"
+printf 'old icon\n' >"$scope_repo/icon.png"
+printf 'base\n' >"$scope_repo/notes.txt"
+git -C "$scope_repo" add .
+git -C "$scope_repo" commit -qm baseline
+printf 'version: 0.1.1+2\n' >"$scope_repo/pubspec.yaml"
+printf 'new icon\n' >"$scope_repo/icon.png"
+printf 'unrelated release work\n' >"$scope_repo/notes.txt"
+scope_report="$TMP/scope-report.json"
+printf '{"apps":[{"app":"didact","applied":{"android":["%s/icon.png"]}}]}\n' \
+    "$scope_repo" >"$scope_report"
+bash -c '
+    source "$1"
+    NONINTERACTIVE=true
+    ICON_PREFLIGHT_REPORT="$2"
+    _push_one_app Didact "$3" "Didact 0.1.1+2" "scope test" pubspec.yaml
+' _ "$TMP/scope-functions.sh" "$scope_report" "$scope_repo" \
+    >"$TMP/scope.out" 2>&1 || fail "scope commit failed"
+scope_files=$(git -C "$scope_repo" show --format= --name-only HEAD | sort | tr '\n' ' ')
+test "$scope_files" = "icon.png pubspec.yaml " || \
+    fail "scope commit included wrong files"
+test "$(git -C "$scope_repo" status --short)" = " M notes.txt" || \
+    fail "unrelated dirty file was staged or committed"
+
 # Choice 5 makes no version change, so this exercises ordering without a
 # build or a persistent version edit.  The preflight banner must precede the
 # first bump prompt.
