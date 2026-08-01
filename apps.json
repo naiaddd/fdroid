@@ -15,6 +15,10 @@
     "packageName": "dev.jim.sentry",
     "displayName": "Sentry"
   },
+  "actions": {
+    "packageName": "dev.jim.actions",
+    "displayName": "Actions"
+  },
   "tutor": {
     "packageName": "dev.jim.tutor",
     "displayName": "Tutor"
