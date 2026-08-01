@@ -96,6 +96,21 @@ test "$scope_files" = "icon.png pubspec.yaml " || \
 test "$(git -C "$scope_repo" status --short)" = " M notes.txt" || \
     fail "unrelated dirty file was staged or committed"
 
+# Updater paths are resolved relative to the Updater project, then prefixed
+# once for the surrounding fdroid workspace commit.
+updater_dir="$TMP/fdroid/updater"
+mkdir -p "$updater_dir/app/src/main/res"
+printf 'icon\n' >"$updater_dir/app/src/main/res/icon.png"
+printf '{"apps":[{"app":"updater","applied":{"android":["%s/app/src/main/res/icon.png"]}}]}\n' \
+    "$updater_dir" >"$TMP/updater-report.json"
+updater_path=$(bash -c '
+    source "$1"
+    ICON_PREFLIGHT_REPORT="$2"
+    _icon_files_for_app updater "$3"
+' _ "$TMP/scope-functions.sh" "$TMP/updater-report.json" "$updater_dir")
+test "$updater_path" = "app/src/main/res/icon.png" || \
+    fail "updater icon path was not workspace-relative exactly once"
+
 # Choice 5 makes no version change, so this exercises ordering without a
 # build or a persistent version edit.  The preflight banner must precede the
 # first bump prompt.
