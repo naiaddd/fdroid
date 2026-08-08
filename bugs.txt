@@ -1,3 +1,11 @@
 - Deploy source commits used `fastpush`/`git add .`, so unrelated dirty app files
   could ship after icon preflight. Limit commits to the bumped version file and
   preflight-reported icon files. Regression: `tests/deploy_icons_test.sh`.
+
+- Didact 0.4.12+45 and 0.4.13+46 stopped after GitHub created draft releases,
+  before either APK upload completed. The public releases API used by Updater
+  omits drafts. A retry uploaded assets to an existing draft but never published
+  it, while a normal deploy also forced another version bump. Preserve assets by
+  tag with checksums, resume the same draft, publish it explicitly, and verify
+  the remote bytes and final non-draft state. Regression:
+  `tests/deploy_release_test.sh`.
