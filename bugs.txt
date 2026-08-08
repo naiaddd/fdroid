@@ -15,3 +15,8 @@
   the next successful check. Store the cohort with the cache and reject entries
   from another cohort. Regression:
   `updater/app/src/test/kotlin/dev/jim/updater/StateCacheTest.kt`.
+
+- Didact split APKs could pass the build step with a missing native library,
+  recreating the SQLite import failure after a dependency or packaging change.
+  Inspect both ABI APKs for SQLite, PDFium, Flutter, and app libraries before
+  copying or publishing them. Regression: `tests/deploy_didact_native_libs_test.sh`.
