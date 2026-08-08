@@ -58,6 +58,23 @@ data class ResolvedApp(
     val baseRemoteCode: Long,
 )
 
+/** The parsed fields from a release tag. Invalid or overflowing tags are ignored. */
+data class ParsedReleaseTag(
+    val prefix: String,
+    val version: String,
+    val code: Long,
+)
+
+private val releaseTagRegex = Regex("^(.+)-v(\\d+\\.\\d+\\.\\d+)\\+(\\d+)$")
+
+/** Parse the release tag format used by deploy.sh. */
+fun parseReleaseTag(tagName: String): ParsedReleaseTag? {
+    val match = releaseTagRegex.matchEntire(tagName) ?: return null
+    val (prefix, version, codeText) = match.destructured
+    val code = codeText.toLongOrNull() ?: return null
+    return ParsedReleaseTag(prefix, version, code)
+}
+
 /**
  * Combines the manifest with the raw release list to find, per app, the release
  * with the highest version code — releases group by tag prefix ("<prefix>-v<version>+<code>").
@@ -74,12 +91,10 @@ fun discoverApps(
     releases: List<ReleaseInfo>,
     cohort: String = COHORT_ALL,
 ): List<ResolvedApp> {
-    val tagRegex = Regex("^(.+)-v(\\d+\\.\\d+\\.\\d+)\\+(\\d+)$")
     val parsed =
         releases.mapNotNull { release ->
-            tagRegex.matchEntire(release.tagName)?.let { match ->
-                val (prefix, version, codeStr) = match.destructured
-                Triple(prefix, version to codeStr.toLong(), release)
+            parseReleaseTag(release.tagName)?.let { parsedTag ->
+                Triple(parsedTag.prefix, parsedTag.version to parsedTag.code, release)
             }
         }
 
@@ -102,4 +117,18 @@ fun discoverApps(
             )
         }
         .sortedBy { it.entry.displayName }
+}
+
+/** Return the APK asset that should be offered for this app, or null if absent. */
+fun downloadAsset(
+    app: ResolvedApp,
+    abi: String = "arm64-v8a",
+): ReleaseAsset? {
+    val assetName =
+        if (app.entry.hasAbiSplit) {
+            "${app.entry.tagPrefix}-$abi.apk"
+        } else {
+            "${app.entry.tagPrefix}.apk"
+        }
+    return app.release.assets.firstOrNull { it.name == assetName }
 }

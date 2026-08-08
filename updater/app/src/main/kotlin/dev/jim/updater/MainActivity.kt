@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         // Render the last successful network read immediately so the list isn't blank
         // until the user taps Check. Installed versions are read live in updateRow().
-        val cached = StateCache.load(this)
+        val cached = StateCache.load(this, BuildConfig.COHORT)
         if (cached.isNotEmpty()) rebuildRows(cached)
     }
 
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 val resolvedApps = discoverApps(manifest, releases, BuildConfig.COHORT)
                 rebuildRows(resolvedApps)
-                StateCache.save(this@MainActivity, resolvedApps)
+                StateCache.save(this@MainActivity, resolvedApps, BuildConfig.COHORT)
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Check failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 "${row.entry.tagPrefix}.apk"
             }
-        val asset = resolved.release.assets.firstOrNull { it.name == assetName }
+        val asset = downloadAsset(resolved, preferredAbi())
         if (asset == null) {
             row.versionsView.text = "${row.versionsView.text}  (asset $assetName missing)"
             row.button.isEnabled = false

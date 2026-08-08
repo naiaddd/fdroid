@@ -13,8 +13,9 @@ import org.json.JSONObject
 object StateCache {
     private const val PREFS = "updater_state"
     private const val KEY_RESOLVED = "resolved_apps"
+    private const val KEY_COHORT = "resolved_cohort"
 
-    fun save(context: Context, apps: List<ResolvedApp>) {
+    fun save(context: Context, apps: List<ResolvedApp>, cohort: String = COHORT_ALL) {
         val array = JSONArray()
         for (app in apps) {
             val assets = JSONArray()
@@ -38,11 +39,27 @@ object StateCache {
                     .put("assets", assets),
             )
         }
-        prefs(context).edit().putString(KEY_RESOLVED, array.toString()).apply()
+        prefs(context).edit()
+            .putString(KEY_RESOLVED, array.toString())
+            .putString(KEY_COHORT, cohort)
+            .apply()
     }
 
-    fun load(context: Context): List<ResolvedApp> {
+    fun load(context: Context, cohort: String = COHORT_ALL): List<ResolvedApp> {
         val raw = prefs(context).getString(KEY_RESOLVED, null) ?: return emptyList()
+        val cachedCohort = prefs(context).getString(KEY_COHORT, null)
+        if (!cacheMatchesCohort(cachedCohort, cohort)) return emptyList()
+        return decode(raw)
+    }
+
+    /** A cache from a different tailored build must never appear in this build. */
+    internal fun cacheMatchesCohort(cachedCohort: String?, requestedCohort: String): Boolean =
+        when (cachedCohort) {
+            null -> requestedCohort == COHORT_ALL // legacy cache has unknown scope
+            else -> cachedCohort == requestedCohort
+        }
+
+    internal fun decode(raw: String): List<ResolvedApp> {
         return try {
             val array = JSONArray(raw)
             (0 until array.length()).map { i ->
