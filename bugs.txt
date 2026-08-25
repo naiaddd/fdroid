@@ -20,3 +20,7 @@
   recreating the SQLite import failure after a dependency or packaging change.
   Inspect both ABI APKs for SQLite, PDFium, Flutter, and app libraries before
   copying or publishing them. Regression: `tests/deploy_didact_native_libs_test.sh`.
+
+- The local deploy script still pointed Sentry at its old checkout path, so
+  release version bumps could target a missing project. Use the current
+  `stable/sentry` checkout. Regression: the maintained-app importer test.
