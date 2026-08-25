@@ -24,3 +24,8 @@
 - The local deploy script still pointed Sentry at its old checkout path, so
   release version bumps could target a missing project. Use the current
   `stable/sentry` checkout. Regression: the maintained-app importer test.
+
+- The deploy script retained moved checkout paths for Anetmon, Actions, Tutor,
+  Didact, Babybool (including `BABYBOOL_RAW_DIR`), and Chatter. Update the
+  paths to their current stable/workbench locations. Regression: shell syntax
+  plus a no-deploy path-existence/importer check.
