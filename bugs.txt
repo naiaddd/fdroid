@@ -29,3 +29,10 @@
   Didact, Babybool (including `BABYBOOL_RAW_DIR`), and Chatter. Update the
   paths to their current stable/workbench locations. Regression: shell syntax
   plus a no-deploy path-existence/importer check.
+
+- A run that selected one app and chose no version change left every unselected
+  app's `*_CHANGED` flag empty. The all-false guard therefore missed, entered
+  build and publish stages, and printed a false deployment success despite
+  publishing nothing. Initialise every flag to `false` before version prompts.
+  Regression: `tests/deploy_icons_test.sh` checks both CamRelay and Didact
+  no-change runs stop before build setup.

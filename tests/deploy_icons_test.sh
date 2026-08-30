@@ -50,6 +50,11 @@ ICONCTL_PATH="$TMP/not-used" "$DEPLOY" --icons=skip camrelay 5 \
     >"$TMP/camrelay.out" 2>&1 || fail "CamRelay selection failed"
 grep -q 'CamRelay — current version: 0.1.0' "$TMP/camrelay.out" || \
     fail "CamRelay version wiring missing"
+grep -q 'No version changes selected' "$TMP/camrelay.out" || \
+    fail "CamRelay no-change run passed into build and publish stages"
+if grep -q 'Activating Python virtual environment' "$TMP/camrelay.out"; then
+    fail "CamRelay no-change run activated the build environment"
+fi
 jq -e '.camrelay == {packageName:"io.github.camrelay.android", displayName:"CamRelay"}' \
     "$ROOT/apps.json" >/dev/null || fail "CamRelay updater manifest entry missing"
 grep -q 'app/build/outputs/apk/release/app-release.apk.*camrelay.apk' \
@@ -132,5 +137,7 @@ preflight_line=$(grep -n 'Running icon preflight' "$TMP/order.out" | head -1 | c
 bump_line=$(grep -n 'Didact — current version' "$TMP/order.out" | head -1 | cut -d: -f1)
 test -n "$preflight_line" && test -n "$bump_line" || fail "ordering markers missing"
 test "$preflight_line" -lt "$bump_line" || fail "preflight ran after bump"
+grep -q 'No version changes selected' "$TMP/order.out" || \
+    fail "no-change selection entered later deploy stages"
 
 echo "ok: deploy icon modes, selection, and pre-bump ordering"
