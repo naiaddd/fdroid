@@ -33,7 +33,7 @@ test "$(cat "$TMP/iconctl.log")" = \
 
 run_preflight auto
 test "$(cat "$TMP/iconctl.log")" = \
-    "preflight --mode auto indicium industria anetmon sentry actions tutor didact brine acetone babybool babyboolraw chatter updater" \
+    "preflight --mode auto indicium industria anetmon sentry actions tutor didact brine acetone babybool babyboolraw chatter camrelay updater" \
     || fail "no-args all-app selection"
 
 ICONCTL_PATH="$TMP/not-used" "$DEPLOY" --icon-preflight --icons=skip didact \
@@ -45,6 +45,17 @@ if ICONCTL_PATH="$FAKE" ICONCTL_LOG="$TMP/invalid.log" \
     fail "invalid mode was accepted"
 fi
 grep -q 'Invalid --icons mode' "$TMP/bad.out" || fail "invalid mode message"
+
+ICONCTL_PATH="$TMP/not-used" "$DEPLOY" --icons=skip camrelay 5 \
+    >"$TMP/camrelay.out" 2>&1 || fail "CamRelay selection failed"
+grep -q 'CamRelay — current version: 0.1.0' "$TMP/camrelay.out" || \
+    fail "CamRelay version wiring missing"
+jq -e '.camrelay == {packageName:"io.github.camrelay.android", displayName:"CamRelay"}' \
+    "$ROOT/apps.json" >/dev/null || fail "CamRelay updater manifest entry missing"
+grep -q 'app/build/outputs/apk/release/app-release.apk.*camrelay.apk' \
+    "$DEPLOY" || fail "CamRelay release APK staging missing"
+grep -q 'create_github_release "CamRelay" "camrelay"' "$DEPLOY" || \
+    fail "CamRelay GitHub release wiring missing"
 
 ICONCTL_PATH="$FAKE" ICONCTL_LOG="$TMP/cohort.log" \
     "$DEPLOY" --updater-cohort=glendel --icon-preflight --icons=require \
