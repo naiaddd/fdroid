@@ -60,5 +60,9 @@
   "chatter": {
     "packageName": "dev.jim.chatter",
     "displayName": "Chatter"
+  },
+  "camrelay": {
+    "packageName": "io.github.camrelay.android",
+    "displayName": "CamRelay"
   }
 }
