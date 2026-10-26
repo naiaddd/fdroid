@@ -64,5 +64,9 @@
   "camrelay": {
     "packageName": "io.github.camrelay.android",
     "displayName": "CamRelay"
+  },
+  "guitartuner": {
+    "packageName": "dev.jim.guitar_tuner",
+    "displayName": "Guitar Tuner"
   }
 }
