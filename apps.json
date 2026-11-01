@@ -68,5 +68,9 @@
   "guitartuner": {
     "packageName": "dev.jim.guitar_tuner",
     "displayName": "Guitar Tuner"
+  },
+  "wayline": {
+    "packageName": "dev.jim.wayline",
+    "displayName": "Wayline"
   }
 }
